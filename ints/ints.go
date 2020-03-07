@@ -16,31 +16,31 @@ type Constraint interface {
 var (
 	// Positive is a constraint which will declare an instance as valid
 	// if its value is positive.
-	Positive = ConstraintFunc(
+	Positive = Func(
 		"positive",
 		func(v int64) bool { return v > 0 })
 
 	// Negative is a constraint which will declare an instance as valid
 	// if its value is negative.
-	Negative = ConstraintFunc(
+	Negative = Func(
 		"negative",
 		func(v int64) bool { return v < 0 })
 
 	// Even is a constraint which will declare an instance as valid
 	// if its value is even.
-	Even = ConstraintFunc(
+	Even = Func(
 		"even",
 		func(v int64) bool { return (v & 1) == 0 })
 
 	// Odd is a constraint which will declare an instance as valid
 	// if its value is odd.
-	Odd = ConstraintFunc(
+	Odd = Func(
 		"odd",
 		func(v int64) bool { return (v & 1) == 1 })
 
 	// PowerOfTwo is a constraint which will declare an instance as valid
 	// if its value is power of two.
-	PowerOfTwo = ConstraintFunc(
+	PowerOfTwo = Func(
 		"power of two",
 		func(v int64) bool {
 			return v > 0 && (v&(v-1)) == 0
@@ -50,7 +50,7 @@ var (
 // Min creates a Constraint which will declare an instance is valid
 // if its value is greater than or equal to refValue.
 func Min(refValue int64) Constraint {
-	return ConstraintFunc(
+	return Func(
 		fmt.Sprintf("min %d", refValue),
 		func(v int64) bool { return v >= refValue })
 }
@@ -58,48 +58,48 @@ func Min(refValue int64) Constraint {
 // Max creates a Constraint which will declare an instance is valid
 // if its value is less than or equal to refValue.
 func Max(refValue int64) Constraint {
-	return ConstraintFunc(
+	return Func(
 		fmt.Sprintf("max %d", refValue),
 		func(v int64) bool { return v <= refValue })
 }
 
-// Const creates an IntConstraint which will declare a value is valid
+// Const creates an Constraint which will declare a value is valid
 // if it matches refValue.
 func Const(refValue int64) Constraint {
 	return &intOp{constraints.EqOpEqual, refValue}
 }
 
-// Equals creates an IntConstraint which an instance will be
+// Equals creates an Constraint which an instance will be
 // declared as valid if its value is equal to refValue.
 func Equals(refValue int64) Constraint {
 	return &intOp{constraints.EqOpEqual, refValue}
 }
 
-// Op creates an IntConstraint which comprise of an operator and the
+// Op creates an Constraint which comprise of an operator and the
 // reference value.
 func Op(op constraints.EqOp, refValue int64) Constraint {
 	return &intOp{op, refValue}
 }
 
-// LessThan creates an IntConstraint which an instance will be
+// LessThan creates an Constraint which an instance will be
 // declared as valid if its value is less than refValue.
 func LessThan(refValue int64) Constraint {
 	return &intOp{ref: refValue, op: constraints.EqOpLess}
 }
 
-// LessThanOrEqualTo creates an IntConstraint which an instance will be
+// LessThanOrEqualTo creates an Constraint which an instance will be
 // declared as valid if its value is less than or equal to refValue.
 func LessThanOrEqualTo(refValue int64) Constraint {
 	return &intOp{ref: refValue, op: constraints.EqOpLessOrEqual}
 }
 
-// GreaterThan creates an IntConstraint which an instance will be declared
+// GreaterThan creates an Constraint which an instance will be declared
 // as valid if its value is greater than refValue.
 func GreaterThan(refValue int64) Constraint {
 	return &intOp{ref: refValue, op: constraints.EqOpGreater}
 }
 
-// GreaterThanOrEqualTo creates an IntConstraint which an instance will be
+// GreaterThanOrEqualTo creates an Constraint which an instance will be
 // declared as valid if its value is greater than or equal to refValue.
 func GreaterThanOrEqualTo(refValue int64) Constraint {
 	return &intOp{ref: refValue, op: constraints.EqOpGreaterOrEqual}
@@ -145,12 +145,12 @@ func (c *intOp) ValidOrError(v int64) constraints.Error {
 	return constraints.ViolationError(c)
 }
 
-// ValidatorFunc is an adapter to allowe use of ordinary functions
+// ValidatorFunc is an adapter to allow use of ordinary functions
 // as a validator in constraints.
 type ValidatorFunc func(i int64) bool
 
-// ConstraintFunc creates a constraint from a validator function.
-func ConstraintFunc(desc string, fn func(v int64) bool) Constraint {
+// Func creates a constraint from a validator function.
+func Func(desc string, fn func(v int64) bool) Constraint {
 	return &constraintFunc{desc, fn}
 }
 

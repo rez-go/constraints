@@ -95,7 +95,7 @@ func (cs Set) ValidateAll(v string) (violated []Constraint) {
 var (
 	// Empty is a constraint which value is considered valid if it's
 	// an empty string.
-	Empty Constraint = ConstraintFunc(
+	Empty Constraint = Func(
 		"empty",
 		func(v string) bool {
 			return v == ""
@@ -104,7 +104,7 @@ var (
 
 	// NotEmpty is a constraint which value is considered valid if it's
 	// not an empty string.
-	NotEmpty Constraint = ConstraintFunc(
+	NotEmpty Constraint = Func(
 		"not empty",
 		func(v string) bool {
 			return v != ""
@@ -115,7 +115,7 @@ var (
 	// if it contains not just whitespace.
 	//
 	// Note that empty string is considered as a non-whitespace string.
-	NotWhitespace Constraint = ConstraintFunc(
+	NotWhitespace Constraint = Func(
 		"not whitespace",
 		func(v string) bool {
 			return v == "" || strlib.TrimSpace(v) != ""
@@ -203,24 +203,24 @@ func (c *lengthOp) ConstraintDescription() string {
 	return "length " + c.lengthCheck.ConstraintDescription()
 }
 
-// ValidatorFunc is an adapter to allowe use of ordinary functions
+// ValidatorFunc is an adapter to allow use of ordinary functions
 // as a validator in constraints.
 type ValidatorFunc func(s string) bool
 
-// ConstraintFunc creates a constraint from a validator function.
+// Func creates a constraint from a validator function.
 //
 // A good example is for defining UTF8 constraint:
 //
 // 	import "unicode/utf8"
 //
-// 	var mustUTF8 = ConstraintFunc("valid UTF-8", utf8.ValidString)
+// 	var mustUTF8 = Func("valid UTF-8", utf8.ValidString)
 //
 // Or regular expression string matcher:
 //
 // 	var myPattern = regexp.MustCompile(`^[a-z]+\[[0-9]+\]$`)
-//  var myConstraint = ConstraintFunc("match my pattern", myPattern.MatchString)
+//  var myConstraint = Func("match my pattern", myPattern.MatchString)
 //
-func ConstraintFunc(desc string, fn func(v string) bool) Constraint {
+func Func(desc string, fn func(v string) bool) Constraint {
 	return &constraintFunc{desc, fn}
 }
 
