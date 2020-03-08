@@ -160,6 +160,27 @@ func MinLength(minLength int64) Constraint {
 		ints.Min(minLength)}
 }
 
+// NoConsecutiveRune creates a Constraint which will declare a string
+// as valid if it doesn't containt any conscutive of r.
+func NoConsecutiveRune(r rune) Constraint {
+	return &funcConstraint{
+		fmt.Sprintf("no consecutive '%c'", r),
+		func(v string) bool {
+			lastRuneMatched := false
+			for _, ir := range v {
+				if ir == r {
+					if lastRuneMatched {
+						return false
+					}
+					lastRuneMatched = true
+				} else {
+					lastRuneMatched = false
+				}
+			}
+			return true
+		}}
+}
+
 // Prefix creates a Constraint which an instance will be declared
 // as valid if its value is prefixed with the specified prefix.
 func Prefix(prefix string) Constraint {

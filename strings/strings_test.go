@@ -287,3 +287,23 @@ func TestPrefix(t *testing.T) {
 		t.Errorf(`!emptyPrefix.IsValid("no prefix")`)
 	}
 }
+
+func TestNoConsecutiveRune(t *testing.T) {
+	noConsecutiveUnderscore := NoConsecutiveRune('_')
+	if noConsecutiveUnderscore.ConstraintDescription() != "no consecutive '_'" {
+		t.Errorf(`expecting "no consecutive '_'", got %q`,
+			noConsecutiveUnderscore.ConstraintDescription())
+	}
+	if !noConsecutiveUnderscore.IsValid("") {
+		t.Errorf(`!noConsecutiveUnderscore.IsValid("")`)
+	}
+	if !noConsecutiveUnderscore.IsValid("_") {
+		t.Errorf(`!noConsecutiveUnderscore.IsValid("_")`)
+	}
+	if noConsecutiveUnderscore.IsValid("__") {
+		t.Errorf(`noConsecutiveUnderscore.IsValid("__")`)
+	}
+	if !noConsecutiveUnderscore.IsValid("_._") {
+		t.Errorf(`!noConsecutiveUnderscore.IsValid("_._")`)
+	}
+}
