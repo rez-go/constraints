@@ -199,9 +199,9 @@ func Suffix(suffix string) Constraint {
 		strlib.HasSuffix}
 }
 
-// Any creates a Constraint which will declare a value as valid
+// OneOf creates a Constraint which will declare a value as valid
 // if it matches one of the choices.
-func Any(choices ...string) Constraint {
+func OneOf(choices ...string) Constraint {
 	copyChoices := make([]string, len(choices))
 	copy(copyChoices, choices)
 	return &funcConstraint{

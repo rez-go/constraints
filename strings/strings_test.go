@@ -252,26 +252,26 @@ func TestConst(t *testing.T) {
 	}
 }
 
-func TestAny(t *testing.T) {
-	emptyAny := Any()
-	if emptyAny.ConstraintDescription() != "in []" {
-		t.Errorf(`expecting "in []", got %q`, emptyAny.ConstraintDescription())
+func TestOneOf(t *testing.T) {
+	emptyOneOf := OneOf()
+	if emptyOneOf.ConstraintDescription() != "in []" {
+		t.Errorf(`expecting "in []", got %q`, emptyOneOf.ConstraintDescription())
 	}
-	if emptyAny.IsValid("") {
-		t.Errorf(`emptyIn.IsValid("")`)
+	if emptyOneOf.IsValid("") {
+		t.Errorf(`emptyOneOf.IsValid("")`)
 	}
-	if emptyAny.IsValid("nothing") {
-		t.Errorf(`emptyIn.IsValid("nothing")`)
+	if emptyOneOf.IsValid("nothing") {
+		t.Errorf(`emptyOneOf.IsValid("nothing")`)
 	}
-	oneAny := Any("one")
-	if oneAny.IsValid("") {
-		t.Errorf(`oneIn.IsValid("")`)
+	oneOneOf := OneOf("one")
+	if oneOneOf.IsValid("") {
+		t.Errorf(`oneOneOf.IsValid("")`)
 	}
-	if oneAny.IsValid("zero") {
-		t.Errorf(`oneIn.IsValid("zero")`)
+	if oneOneOf.IsValid("zero") {
+		t.Errorf(`oneOneOf.IsValid("zero")`)
 	}
-	if !oneAny.IsValid("one") {
-		t.Errorf(`!oneIn.IsValid("one")`)
+	if !oneOneOf.IsValid("one") {
+		t.Errorf(`!oneOneOf.IsValid("one")`)
 	}
 }
 

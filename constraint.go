@@ -8,7 +8,7 @@ type Constraint interface {
 	// ConstraintDescription returns the description of the constraint, e.g.,
 	// "5 or less".
 	//
-	// This interface is a porcelain interface.
+	// This is a porcelain interface.
 	ConstraintDescription() string
 }
 
