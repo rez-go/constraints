@@ -6,16 +6,16 @@ import (
 	"github.com/rez-go/constraints"
 )
 
-func TestStringEmpty(t *testing.T) {
+func TestEmpty(t *testing.T) {
 	if Empty.ConstraintDescription() != "empty" {
 		t.Errorf(`expecting "empty", got %q`,
 			Empty.ConstraintDescription())
 	}
 	if !Empty.IsValid("") {
-		t.Errorf(`!StringEmpty.IsValid("")`)
+		t.Errorf(`!Empty.IsValid("")`)
 	}
 	if Empty.IsValid("empty") {
-		t.Errorf(`StringEmpty.IsValid("empty")`)
+		t.Errorf(`Empty.IsValid("empty")`)
 	}
 	if err := Empty.ValidOrError(""); err != nil {
 		t.Errorf(`err := Empty.ValidOrError(""); err != nil`)
@@ -41,39 +41,39 @@ func TestStringEmpty(t *testing.T) {
 	}
 }
 
-func TestStringNotEmpty(t *testing.T) {
+func TestNotEmpty(t *testing.T) {
 	if NotEmpty.ConstraintDescription() != "not empty" {
 		t.Errorf(`expecting "not empty", got %q`,
 			NotEmpty.ConstraintDescription())
 	}
 	if NotEmpty.IsValid("") {
-		t.Errorf(`StringNotEmpty.IsValid("")`)
+		t.Errorf(`NotEmpty.IsValid("")`)
 	}
 	if !NotEmpty.IsValid("empty") {
-		t.Errorf(`!StringNotEmpty.IsValid("empty")`)
+		t.Errorf(`!NotEmpty.IsValid("empty")`)
 	}
 }
 
-func TestStringNotWhitespace(t *testing.T) {
+func TestNotWhitespace(t *testing.T) {
 	if NotWhitespace.ConstraintDescription() != "not whitespace" {
 		t.Errorf(`expecting "not whitespace", got %q`,
 			NotWhitespace.ConstraintDescription())
 	}
 	if !NotWhitespace.IsValid("") {
-		t.Errorf(`!StringNotWhitespace.IsValid("")`)
+		t.Errorf(`!NotWhitespace.IsValid("")`)
 	}
 	if NotWhitespace.IsValid("   ") {
-		t.Errorf(`StringNotWhitespace.IsValid("   ")`)
+		t.Errorf(`NotWhitespace.IsValid("   ")`)
 	}
 	if NotWhitespace.IsValid("		") {
-		t.Errorf(`StringNotWhitespace.IsValid("		")`)
+		t.Errorf(`NotWhitespace.IsValid("		")`)
 	}
 	if !NotWhitespace.IsValid("whitespace") {
-		t.Errorf(`!StringNotWhitespace.IsValid("whitespace")`)
+		t.Errorf(`!NotWhitespace.IsValid("whitespace")`)
 	}
 }
 
-func TestStringLength10(t *testing.T) {
+func TestLength10(t *testing.T) {
 	len10 := Length(10)
 	if !len10.IsValid("1234567890") {
 		t.Errorf(`!len10.IsValid("1234567890")`)
@@ -89,10 +89,10 @@ func TestStringLength10(t *testing.T) {
 	}
 }
 
-func TestStringLength0(t *testing.T) {
+func TestLength0(t *testing.T) {
 	len0 := Length(0)
-	if len0.ConstraintDescription() != "length equals 0" {
-		t.Errorf(`expecting "length equals 0", got %q`,
+	if len0.ConstraintDescription() != "length 0" {
+		t.Errorf(`expecting "length 0", got %q`,
 			len0.ConstraintDescription())
 	}
 	if !len0.IsValid("") {
@@ -106,7 +106,7 @@ func TestStringLength0(t *testing.T) {
 	}
 }
 
-func TestStringMinLength0(t *testing.T) {
+func TestMinLength0(t *testing.T) {
 	min0 := MinLength(0)
 	if !min0.IsValid("1234567890") {
 		t.Errorf(`!min0.IsValid("1234567890")`)
@@ -119,7 +119,7 @@ func TestStringMinLength0(t *testing.T) {
 	}
 }
 
-func TestStringMinLength10(t *testing.T) {
+func TestMinLength10(t *testing.T) {
 	min10 := MinLength(10)
 	if min10.IsValid("") {
 		t.Errorf(`min10.IsValid("")`)
@@ -135,7 +135,7 @@ func TestStringMinLength10(t *testing.T) {
 	}
 }
 
-func TestStringMaxLength0(t *testing.T) {
+func TestMaxLength0(t *testing.T) {
 	max0 := MaxLength(0)
 	if !max0.IsValid("") {
 		t.Errorf(`!max0.IsValid("")`)
@@ -148,7 +148,7 @@ func TestStringMaxLength0(t *testing.T) {
 	}
 }
 
-func TestStringMaxLength10(t *testing.T) {
+func TestMaxLength10(t *testing.T) {
 	max10 := MaxLength(10)
 	if !max10.IsValid("") {
 		t.Errorf(`!max10.IsValid("")`)
@@ -164,7 +164,7 @@ func TestStringMaxLength10(t *testing.T) {
 	}
 }
 
-func TestStringSetEmpty(t *testing.T) {
+func TestSetEmpty(t *testing.T) {
 	cs := Set{}
 	if cs.ConstraintDescription() != "" {
 		t.Errorf(`expecting "", got %q`,
@@ -210,8 +210,8 @@ func TestSetBasic(t *testing.T) {
 
 func TestSetMinhNotWhitespace(t *testing.T) {
 	cs := Set{MinLength(5), NotWhitespace}
-	if cs.ConstraintDescription() != "length min 5, not whitespace" {
-		t.Errorf(`expecting "length min 5, not whitespace", got %q`,
+	if cs.ConstraintDescription() != "min length 5, not whitespace" {
+		t.Errorf(`expecting "min length 5, not whitespace", got %q`,
 			cs.ConstraintDescription())
 	}
 	if cs.IsValid("") {
@@ -224,12 +224,12 @@ func TestSetMinhNotWhitespace(t *testing.T) {
 		t.Errorf(`!cs.IsValid("hello")`)
 	}
 	err := cs.ValidOrError("   ")
-	if err.Error() != "required to be length min 5, not whitespace" {
-		t.Errorf(`expecting "required to be length min 5, not whitespace", got %q`, err.Error())
+	if err.Error() != "required to be min length 5, not whitespace" {
+		t.Errorf(`expecting "required to be min length 5, not whitespace", got %q`, err.Error())
 	}
 }
 
-func TestStringConst(t *testing.T) {
+func TestConst(t *testing.T) {
 	emptyConst := Const("")
 	if emptyConst.ConstraintDescription() != "const \"\"" {
 		t.Errorf(`expecting "const \"\"", got %q`, emptyConst.ConstraintDescription())
@@ -252,25 +252,38 @@ func TestStringConst(t *testing.T) {
 	}
 }
 
-func TestStringIn(t *testing.T) {
-	emptyIn := In()
-	if emptyIn.ConstraintDescription() != "in []" {
-		t.Errorf(`expecting "in []", got %q`, emptyIn.ConstraintDescription())
+func TestAny(t *testing.T) {
+	emptyAny := Any()
+	if emptyAny.ConstraintDescription() != "in []" {
+		t.Errorf(`expecting "in []", got %q`, emptyAny.ConstraintDescription())
 	}
-	if emptyIn.IsValid("") {
+	if emptyAny.IsValid("") {
 		t.Errorf(`emptyIn.IsValid("")`)
 	}
-	if emptyIn.IsValid("nothing") {
+	if emptyAny.IsValid("nothing") {
 		t.Errorf(`emptyIn.IsValid("nothing")`)
 	}
-	oneIn := In("one")
-	if oneIn.IsValid("") {
+	oneAny := Any("one")
+	if oneAny.IsValid("") {
 		t.Errorf(`oneIn.IsValid("")`)
 	}
-	if oneIn.IsValid("zero") {
+	if oneAny.IsValid("zero") {
 		t.Errorf(`oneIn.IsValid("zero")`)
 	}
-	if !oneIn.IsValid("one") {
+	if !oneAny.IsValid("one") {
 		t.Errorf(`!oneIn.IsValid("one")`)
+	}
+}
+
+func TestPrefix(t *testing.T) {
+	emptyPrefix := Prefix("")
+	if emptyPrefix.ConstraintDescription() != "prefix \"\"" {
+		t.Errorf(`expecting "prefix \"\"", got %q`, emptyPrefix.ConstraintDescription())
+	}
+	if !emptyPrefix.IsValid("") {
+		t.Errorf(`!emptyPrefix.IsValid("")`)
+	}
+	if !emptyPrefix.IsValid("no prefix") {
+		t.Errorf(`!emptyPrefix.IsValid("no prefix")`)
 	}
 }

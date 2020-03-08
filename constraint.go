@@ -18,6 +18,10 @@ type Set interface {
 	ConstraintList() []Constraint
 }
 
+// Length is an abstraction for length-based constraints.
+type Length interface {
+}
+
 // An EqOp specifies equality operator.
 type EqOp int
 

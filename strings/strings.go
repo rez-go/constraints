@@ -97,24 +97,18 @@ var (
 	// an empty string.
 	Empty Constraint = Func(
 		"empty",
-		func(v string) bool {
-			return v == ""
-		},
-	)
+		func(v string) bool { return v == "" })
 
 	// NotEmpty is a constraint which value is considered valid if it's
 	// not an empty string.
 	NotEmpty Constraint = Func(
 		"not empty",
-		func(v string) bool {
-			return v != ""
-		},
-	)
+		func(v string) bool { return v != "" })
 
 	// NotWhitespace is a constraint which will consider value is valid
 	// if it contains not just whitespace.
 	//
-	// Note that empty string is considered as a non-whitespace string.
+	// Note that an empty string is considered as a non-whitespace string.
 	NotWhitespace Constraint = Func(
 		"not whitespace",
 		func(v string) bool {
@@ -123,51 +117,73 @@ var (
 	)
 )
 
-// Length returns a Constraint which a string instance is
-// valid against the constraint if its length is exactly as specified.
-func Length(specifiedLength int64) Constraint {
-	if specifiedLength < 0 {
-		panic("specifiedLength must be zero or a positive integer")
-	}
-	return &lengthOp{ints.Equals(specifiedLength)}
-}
-
-// MaxLength returns a Constraint which a string instance is
-// valid against the constraint if its length is less than, or equal to,
-// the reference value.
-func MaxLength(maxLength int64) Constraint {
-	if maxLength < 0 {
-		panic("maxLength must be zero or a positive integer")
-	}
-	return &lengthOp{ints.Max(maxLength)}
-}
-
-// MinLength returns a Constraint which a string instance is
-// valid against the constraint if its length is greater than, or equal to,
-// the reference value.
-func MinLength(minLength int64) Constraint {
-	if minLength < 0 {
-		panic("minLength must be zero or a positive integer")
-	}
-	return &lengthOp{ints.Min(minLength)}
-}
-
-// Const creates a Constraint which will declare a value as valid
-// if it matches refValue.
+// Const creates a Constraint which will declare an instance as valid
+// if its value matches refValue.
 func Const(refValue string) Constraint {
-	return &constraintFunc{
+	return &funcConstraint{
 		fmt.Sprintf("const %q", refValue),
 		func(v string) bool {
 			return v == refValue
 		}}
 }
 
-// In creates a Constraint which will declare a value as valid
+// Length returns a Constraint which an instance is
+// valid against the constraint if its length is exactly as specified.
+func Length(specifiedLength int64) Constraint {
+	if specifiedLength < 0 {
+		panic("specifiedLength must be zero or a positive integer")
+	}
+	return &lengthConstraint{
+		fmt.Sprintf("length %d", specifiedLength),
+		ints.Const(specifiedLength)}
+}
+
+// MaxLength returns a Constraint which will declare an instance as valid
+// if its length is less than or equal to the maxLength.
+func MaxLength(maxLength int64) Constraint {
+	if maxLength < 0 {
+		panic("maxLength must be zero or a positive integer")
+	}
+	return &lengthConstraint{
+		fmt.Sprintf("max length %d", maxLength),
+		ints.Max(maxLength)}
+}
+
+// MinLength returns a Constraint which will declare an instance as valid
+// if its length is more than or equal to the minLength.
+func MinLength(minLength int64) Constraint {
+	if minLength < 0 {
+		panic("minLength must be zero or a positive integer")
+	}
+	return &lengthConstraint{
+		fmt.Sprintf("min length %d", minLength),
+		ints.Min(minLength)}
+}
+
+// Prefix creates a Constraint which an instance will be declared
+// as valid if its value is prefixed with the specified prefix.
+func Prefix(prefix string) Constraint {
+	return &targetOperandFuncConstraint{
+		fmt.Sprintf("prefix %q", prefix),
+		prefix,
+		strlib.HasPrefix}
+}
+
+// Suffix creates a Constraint which an instance will be declared
+// as valid if its value is suffixed with the specified suffix.
+func Suffix(suffix string) Constraint {
+	return &targetOperandFuncConstraint{
+		fmt.Sprintf("suffix %q", suffix),
+		suffix,
+		strlib.HasSuffix}
+}
+
+// Any creates a Constraint which will declare a value as valid
 // if it matches one of the choices.
-func In(choices ...string) Constraint {
+func Any(choices ...string) Constraint {
 	copyChoices := make([]string, len(choices))
 	copy(copyChoices, choices)
-	return &constraintFunc{
+	return &funcConstraint{
 		fmt.Sprintf("in %v", copyChoices),
 		func(v string) bool {
 			for _, s := range copyChoices {
@@ -179,37 +195,14 @@ func In(choices ...string) Constraint {
 		}}
 }
 
-var (
-	_ Constraint = &lengthOp{}
-)
-
-type lengthOp struct {
-	lengthCheck ints.Constraint
-}
-
-func (c *lengthOp) IsValid(v string) bool {
-	return c.lengthCheck.IsValid(int64(len(v)))
-}
-
-// ValidOrError conforms Constraint interface.
-func (c *lengthOp) ValidOrError(v string) constraints.Error {
-	if c != nil && c.IsValid(v) {
-		return nil
-	}
-	return constraints.ViolationError(c)
-}
-
-func (c *lengthOp) ConstraintDescription() string {
-	return "length " + c.lengthCheck.ConstraintDescription()
-}
-
 // ValidatorFunc is an adapter to allow use of ordinary functions
 // as a validator in constraints.
 type ValidatorFunc func(s string) bool
 
 // Func creates a constraint from a validator function.
 //
-// A good example is for defining UTF8 constraint:
+// A good example is for defining a constraint to ensure that provided
+// string is a valid UTF8-encoded string:
 //
 // 	import "unicode/utf8"
 //
@@ -217,39 +210,100 @@ type ValidatorFunc func(s string) bool
 //
 // Or regular expression string matcher:
 //
-// 	var myPattern = regexp.MustCompile(`^[a-z]+\[[0-9]+\]$`)
-//  var myConstraint = Func("match my pattern", myPattern.MatchString)
+//  var usernamePattern = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]+$`)
+//  var usernameConstraint = Func("username", usernamePattern.MatchString)
 //
 func Func(desc string, fn func(v string) bool) Constraint {
-	return &constraintFunc{desc, fn}
+	return &funcConstraint{desc, fn}
 }
 
 var (
-	_ Constraint = &constraintFunc{}
+	_ Constraint = &funcConstraint{}
 )
 
-type constraintFunc struct {
+type funcConstraint struct {
 	desc string
 	fn   ValidatorFunc
 }
 
-func (c *constraintFunc) ConstraintDescription() string {
+func (c *funcConstraint) ConstraintDescription() string {
 	if c != nil {
 		return c.desc
 	}
-	return "<unknown string constraint>"
+	return "string constraint"
 }
 
-func (c *constraintFunc) IsValid(v string) bool {
+func (c *funcConstraint) IsValid(v string) bool {
 	if c != nil {
 		return c.fn(v)
 	}
 	return false
 }
 
-func (c *constraintFunc) ValidOrError(v string) constraints.Error {
+func (c *funcConstraint) ValidOrError(v string) constraints.Error {
 	if c != nil && c.IsValid(v) {
 		return nil
 	}
 	return constraints.ViolationError(c)
+}
+
+var (
+	_ Constraint = &targetOperandFuncConstraint{}
+)
+
+type targetOperandFuncConstraint struct {
+	desc    string
+	operand string
+	fn      func(target, operand string) bool
+}
+
+func (c *targetOperandFuncConstraint) ConstraintDescription() string {
+	if c != nil {
+		return c.desc
+	}
+	return "string constraint"
+}
+
+func (c *targetOperandFuncConstraint) IsValid(v string) bool {
+	return c != nil && c.fn != nil && c.fn(v, c.operand)
+}
+
+func (c *targetOperandFuncConstraint) ValidOrError(v string) constraints.Error {
+	if c != nil && c.IsValid(v) {
+		return nil
+	}
+	return constraints.ViolationError(c)
+}
+
+var (
+	_ Constraint         = &lengthConstraint{}
+	_ constraints.Length = &lengthConstraint{}
+)
+
+type lengthConstraint struct {
+	desc       string
+	constraint ints.Constraint
+}
+
+func (w *lengthConstraint) ConstraintDescription() string {
+	if w != nil {
+		if w.desc != "" {
+			return w.desc
+		}
+		if w.constraint != nil {
+			return "length " + w.constraint.ConstraintDescription()
+		}
+	}
+	return "string length constraint"
+}
+
+func (w *lengthConstraint) IsValid(v string) bool {
+	return w != nil && w.constraint != nil && w.constraint.IsValid(int64(len(v)))
+}
+
+func (w *lengthConstraint) ValidOrError(v string) constraints.Error {
+	if w == nil || !w.IsValid(v) {
+		return constraints.ViolationError(w)
+	}
+	return nil
 }
