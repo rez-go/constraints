@@ -5,6 +5,7 @@ package strings
 
 import (
 	"fmt"
+	"strings"
 	strlib "strings"
 
 	"github.com/rez-go/constraints"
@@ -252,6 +253,45 @@ func (c *MinLength) IsValid(v string) bool {
 	return c != nil && int64(len(v)) >= c.refValue
 }
 
+// NewOneOf creates a Constraint which will declare a value as valid
+// if it matches one of the choices.
+//
+// API status: experimental
+func NewOneOf(choices ...string) Constraint {
+	copyChoices := make([]string, len(choices))
+	copy(copyChoices, choices)
+	return &OneOf{copyChoices}
+}
+
+// OneOf defines choice-based Constraint.
+type OneOf struct {
+	choices []string
+}
+
+var (
+	_ Constraint = &OneOf{}
+)
+
+// ConstraintDescription conforms constraints.Constraint interface.
+func (c *OneOf) ConstraintDescription() string {
+	if c != nil {
+		return "one of [" + strings.Join(c.choices, ", ") + "]"
+	}
+	return "one-of constraint"
+}
+
+// IsValid conforms Constraint interface.
+func (c *OneOf) IsValid(v string) bool {
+	if c != nil {
+		for _, s := range c.choices {
+			if s == v {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // NoConsecutiveRune creates a Constraint which will declare a string
 // as valid if it doesn't containt any conscutive of r.
 func NoConsecutiveRune(r rune) Constraint {
@@ -289,25 +329,6 @@ func Suffix(suffix string) Constraint {
 		fmt.Sprintf("suffix %q", suffix),
 		suffix,
 		strlib.HasSuffix}
-}
-
-// OneOf creates a Constraint which will declare a value as valid
-// if it matches one of the choices.
-//
-// API status: experimental
-func OneOf(choices ...string) Constraint {
-	copyChoices := make([]string, len(choices))
-	copy(copyChoices, choices)
-	return &funcConstraint{
-		fmt.Sprintf("in %v", copyChoices),
-		func(v string) bool {
-			for _, s := range copyChoices {
-				if v == s {
-					return true
-				}
-			}
-			return false
-		}}
 }
 
 // ValidatorFunc is an adapter to allow use of ordinary functions

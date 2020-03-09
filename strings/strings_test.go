@@ -253,9 +253,10 @@ func TestConst(t *testing.T) {
 }
 
 func TestOneOf(t *testing.T) {
-	emptyOneOf := OneOf()
-	if emptyOneOf.ConstraintDescription() != "in []" {
-		t.Errorf(`expecting "in []", got %q`, emptyOneOf.ConstraintDescription())
+	emptyOneOf := NewOneOf()
+	if emptyOneOf.ConstraintDescription() != "one of []" {
+		t.Errorf(`expecting "one of []", got %q`,
+			emptyOneOf.ConstraintDescription())
 	}
 	if emptyOneOf.IsValid("") {
 		t.Errorf(`emptyOneOf.IsValid("")`)
@@ -263,7 +264,11 @@ func TestOneOf(t *testing.T) {
 	if emptyOneOf.IsValid("nothing") {
 		t.Errorf(`emptyOneOf.IsValid("nothing")`)
 	}
-	oneOneOf := OneOf("one")
+	oneOneOf := NewOneOf("one")
+	if oneOneOf.ConstraintDescription() != "one of [one]" {
+		t.Errorf(`expecting "one of [one]", got %q`,
+			oneOneOf.ConstraintDescription())
+	}
 	if oneOneOf.IsValid("") {
 		t.Errorf(`oneOneOf.IsValid("")`)
 	}
@@ -272,6 +277,11 @@ func TestOneOf(t *testing.T) {
 	}
 	if !oneOneOf.IsValid("one") {
 		t.Errorf(`!oneOneOf.IsValid("one")`)
+	}
+	oneOfOneTwoThree := NewOneOf("one", "two", "three")
+	if oneOfOneTwoThree.ConstraintDescription() != "one of [one, two, three]" {
+		t.Errorf(`expecting "one of [one, two, three]", got %q`,
+			oneOfOneTwoThree.ConstraintDescription())
 	}
 }
 
