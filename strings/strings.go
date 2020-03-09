@@ -103,6 +103,7 @@ func (cs Set) ValidateAll(v string) (violated []Constraint) {
 	return
 }
 
+// Built-in non-parametric constraints.
 var (
 	// Empty is a constraint which value is considered valid if it's
 	// an empty string.
@@ -130,7 +131,7 @@ var (
 
 // NewConst creates a Constraint which will declare an instance as valid
 // if its value matches refValue.
-func NewConst(refValue string) Constraint { return &Const{refValue} }
+func NewConst(refValue string) *Const { return &Const{refValue} }
 
 // Const defines constant value Constraint.
 type Const struct {
@@ -158,7 +159,7 @@ func (c *Const) IsValid(v string) bool {
 // declared as valid if its length is exactly as specified.
 //
 // API status: experimental
-func NewLength(specifiedLength int64) Constraint {
+func NewLength(specifiedLength int64) *Length {
 	if specifiedLength < 0 {
 		panic("specifiedLength must be zero or a positive integer")
 	}
@@ -191,7 +192,7 @@ func (c *Length) IsValid(v string) bool {
 // declared as valid if its length is at most equal to maxLength.
 //
 // API status: experimental
-func NewMaxLength(maxLength int64) Constraint {
+func NewMaxLength(maxLength int64) *MaxLength {
 	if maxLength < 0 {
 		panic("maxLength must be zero or a positive integer")
 	}
@@ -224,7 +225,7 @@ func (c *MaxLength) IsValid(v string) bool {
 // declared as valid if its length is at most least to maxLength.
 //
 // API status: experimental
-func NewMinLength(minLength int64) Constraint {
+func NewMinLength(minLength int64) *MinLength {
 	if minLength < 0 {
 		panic("minLength must be zero or a positive integer")
 	}
@@ -257,7 +258,7 @@ func (c *MinLength) IsValid(v string) bool {
 // if it matches one of the choices.
 //
 // API status: experimental
-func NewOneOf(choices ...string) Constraint {
+func NewOneOf(choices ...string) *OneOf {
 	copyChoices := make([]string, len(choices))
 	copy(copyChoices, choices)
 	return &OneOf{copyChoices}
