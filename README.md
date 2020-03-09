@@ -10,7 +10,7 @@ guaranteed to stay as they are now. Everything is subject to change.
 When attempting to restructure errors in my project, I realized that errors
 could be classified into two classes: API errors, and data errors.
 
-When we are talking about data-related errors, most are instances are coming
+When we are talking about data-related errors, most instances are coming
 out from data validation. An error which coming from a validation process
 should provide enough information about why the data is considered as invalid,
 i.e., the rules or constraints it violated.
@@ -26,6 +26,28 @@ based on the consumer.
 We want the constraints to be structured so that it could be nicely passed
 as understandable data to other systems, including to the end-user
 presentation layer, which could be translated to any human language.
+
+## Goals
+
+- Readable constraints
+
+  We must design the module and packages so that the struct, function and
+  variable names are easy to understand.
+
+- Focus on simple rule for each constraint
+
+  Avoid defining constraints which could be constructed from simple
+  constraints. For example we might see that we should be able to define
+  value range constraints, but these could be constructed from `Maximum` and
+  `Minimum`.
+
+- Easy to programatically dig deep into a constraint
+
+  Use types.
+
+- Easy to generate rules for other systems
+
+
 
 ## Design
 
@@ -122,7 +144,7 @@ The `violatedConstraints` contains all the constraints the data violates.
 This could be a good case for end user as they could fix their input in
 one go rather than back-and-forth.
 
-Or as error:
+Or as error in a request handler:
 
 ```go
 err := usernameConstraints.ValidOrError(username)
@@ -140,7 +162,7 @@ other systems, e.g., JSON Schema.
 ```go
 //...
 
-jsonSchemaField := usernameConstraints.JSONSchemaField("username")
+jsonSchemaField := JSONSchemaField("username", usernameConstraints)
 
 //...
 ```
@@ -148,17 +170,27 @@ jsonSchemaField := usernameConstraints.JSONSchemaField("username")
 ## Hacking
 
 - We are still in designing stage. Anything could be suggested to be
-  changed.
-- We limit the dependencies only to Go's stdlib.
+  changed. We want some discussions.
+- We want to make this to be practical and relevant to real-world usages.
+  Any examples of real-world usage will be much appreciated.
 - We won't include rules which don't have strict, static constraints.
   We might won't even include rules for standard formats.
-  We will never include validations for formats like phone numbers
-  (it's very dynamic), email addresses, domains and postal addresses.
+  We will never include validations for formats like phone numbers,
+  email addresses, internet domains and postal addresses.
   We should provide enough facilities to others to provide module for
   certain type of validation.
 - We might want to limit this module to contain only the contracts and
   limited utilites, and put common constraints into their own module
   (discuss!).
+- Generating constraints for other systems, e.g., JSON schema, must be done
+  in external module. We haven't actually designed this module the for
+  this kind of usage. Built in rules must not know about other systems but
+  they must provide enough information for other modules to generate
+  the the rules in their own format from built-in rules.
+
+### Technical Constraints
+
+We limit the dependencies only to Go's stdlib.
 
 ## References
 

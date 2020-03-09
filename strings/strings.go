@@ -1,3 +1,6 @@
+// Package strings contains constraints for strings.
+//
+// TODO: case-folding / caseless
 package strings
 
 import (
@@ -5,14 +8,35 @@ import (
 	strlib "strings"
 
 	"github.com/rez-go/constraints"
-	"github.com/rez-go/constraints/ints"
 )
 
 // Constraint is an abstract type for string-related constraints.
 type Constraint interface {
 	constraints.Constraint
 	IsValid(v string) bool
-	ValidOrError(v string) constraints.Error
+}
+
+// ValidOrError tests the value v against constraint c. If the value is
+// valid, it will return nil, otherwise, it'll return an error.
+//
+// If the constraint is a Set and the value violated any
+// or all of the constraints, this method will return a Error which
+// constraint contained is a new instance of Set contains only the
+// violated constraints.
+func ValidOrError(v string, c Constraint) constraints.Error {
+	if c != nil {
+		if cs, ok := c.(interface{ ValidateAll(string) []Constraint }); ok && cs != nil {
+			violatedConstraints := cs.ValidateAll(v)
+			if len(violatedConstraints) > 0 {
+				return constraints.ViolationError(Set(violatedConstraints))
+			}
+			return nil
+		}
+		if c.IsValid(v) {
+			return nil
+		}
+	}
+	return constraints.ViolationError(c)
 }
 
 var (
@@ -53,20 +77,6 @@ func (cs Set) ConstraintList() []constraints.Constraint {
 // IsValid conforms Constraint interface.
 func (cs Set) IsValid(v string) bool {
 	return cs != nil && cs.Validate(v) == nil
-}
-
-// ValidOrError conforms Constraint interface. If the value violated any
-// or all of the constraints, this method will return a new instance
-// of Set which contains only the violated constraints.
-func (cs Set) ValidOrError(v string) constraints.Error {
-	if cs != nil {
-		violatedConstraints := cs.ValidateAll(v)
-		if len(violatedConstraints) == 0 {
-			return nil
-		}
-		return constraints.ViolationError(Set(violatedConstraints))
-	}
-	return constraints.ViolationError(Set{})
 }
 
 // Validate checks the value against the constraints. If the value is
@@ -117,47 +127,129 @@ var (
 	)
 )
 
-// Const creates a Constraint which will declare an instance as valid
+// NewConst creates a Constraint which will declare an instance as valid
 // if its value matches refValue.
-func Const(refValue string) Constraint {
-	return &funcConstraint{
-		fmt.Sprintf("const %q", refValue),
-		func(v string) bool {
-			return v == refValue
-		}}
+func NewConst(refValue string) Constraint { return &Const{refValue} }
+
+// Const defines constant value Constraint.
+type Const struct {
+	refValue string
 }
 
-// Length returns a Constraint which an instance is
-// valid against the constraint if its length is exactly as specified.
-func Length(specifiedLength int64) Constraint {
+var (
+	_ Constraint = &Const{}
+)
+
+// ConstraintDescription conforms constraints.Constraint interface.
+func (c *Const) ConstraintDescription() string {
+	if c != nil {
+		return fmt.Sprintf("const %q", c.refValue)
+	}
+	return "const constraint"
+}
+
+// IsValid conforms Constraint interface.
+func (c *Const) IsValid(v string) bool {
+	return c != nil && v == c.refValue
+}
+
+// NewLength returns a Constraint which a string instance will be
+// declared as valid if its length is exactly as specified.
+//
+// API status: experimental
+func NewLength(specifiedLength int64) Constraint {
 	if specifiedLength < 0 {
 		panic("specifiedLength must be zero or a positive integer")
 	}
-	return &lengthConstraint{
-		fmt.Sprintf("length %d", specifiedLength),
-		ints.Const(specifiedLength)}
+	return &Length{specifiedLength}
 }
 
-// MaxLength returns a Constraint which will declare an instance as valid
-// if its length is less than or equal to the maxLength.
-func MaxLength(maxLength int64) Constraint {
+// Length defines exact length Constraint.
+type Length struct {
+	refValue int64
+}
+
+var (
+	_ Constraint = &Length{}
+)
+
+// ConstraintDescription conforms constraints.Constraint interface.
+func (c *Length) ConstraintDescription() string {
+	if c != nil {
+		return fmt.Sprintf("length %d", c.refValue)
+	}
+	return "length constraint"
+}
+
+// IsValid conforms Constraint interface.
+func (c *Length) IsValid(v string) bool {
+	return c != nil && int64(len(v)) == c.refValue
+}
+
+// NewMaxLength returns a Constraint which a string instance will be
+// declared as valid if its length is at most equal to maxLength.
+//
+// API status: experimental
+func NewMaxLength(maxLength int64) Constraint {
 	if maxLength < 0 {
 		panic("maxLength must be zero or a positive integer")
 	}
-	return &lengthConstraint{
-		fmt.Sprintf("max length %d", maxLength),
-		ints.Max(maxLength)}
+	return &MaxLength{maxLength}
 }
 
-// MinLength returns a Constraint which will declare an instance as valid
-// if its length is more than or equal to the minLength.
-func MinLength(minLength int64) Constraint {
+// MaxLength defines minimum length Constraint.
+type MaxLength struct {
+	refValue int64
+}
+
+var (
+	_ Constraint = &MaxLength{}
+)
+
+// ConstraintDescription conforms constraints.Constraint interface.
+func (c *MaxLength) ConstraintDescription() string {
+	if c != nil {
+		return fmt.Sprintf("max length %d", c.refValue)
+	}
+	return "max length constraint"
+}
+
+// IsValid conforms Constraint interface.
+func (c *MaxLength) IsValid(v string) bool {
+	return c != nil && int64(len(v)) <= c.refValue
+}
+
+// NewMinLength returns a Constraint which a string instance will be
+// declared as valid if its length is at most least to maxLength.
+//
+// API status: experimental
+func NewMinLength(minLength int64) Constraint {
 	if minLength < 0 {
 		panic("minLength must be zero or a positive integer")
 	}
-	return &lengthConstraint{
-		fmt.Sprintf("min length %d", minLength),
-		ints.Min(minLength)}
+	return &MinLength{minLength}
+}
+
+// MinLength defines minimum length Constraint.
+type MinLength struct {
+	refValue int64
+}
+
+var (
+	_ Constraint = &MinLength{}
+)
+
+// ConstraintDescription conforms constraints.Constraint interface.
+func (c *MinLength) ConstraintDescription() string {
+	if c != nil {
+		return fmt.Sprintf("min length %d", c.refValue)
+	}
+	return "min length constraint"
+}
+
+// IsValid conforms Constraint interface.
+func (c *MinLength) IsValid(v string) bool {
+	return c != nil && int64(len(v)) >= c.refValue
 }
 
 // NoConsecutiveRune creates a Constraint which will declare a string
@@ -201,6 +293,8 @@ func Suffix(suffix string) Constraint {
 
 // OneOf creates a Constraint which will declare a value as valid
 // if it matches one of the choices.
+//
+// API status: experimental
 func OneOf(choices ...string) Constraint {
 	copyChoices := make([]string, len(choices))
 	copy(copyChoices, choices)
@@ -261,13 +355,6 @@ func (c *funcConstraint) IsValid(v string) bool {
 	return false
 }
 
-func (c *funcConstraint) ValidOrError(v string) constraints.Error {
-	if c != nil && c.IsValid(v) {
-		return nil
-	}
-	return constraints.ViolationError(c)
-}
-
 var (
 	_ Constraint = &targetOperandFuncConstraint{}
 )
@@ -287,44 +374,4 @@ func (c *targetOperandFuncConstraint) ConstraintDescription() string {
 
 func (c *targetOperandFuncConstraint) IsValid(v string) bool {
 	return c != nil && c.fn != nil && c.fn(v, c.operand)
-}
-
-func (c *targetOperandFuncConstraint) ValidOrError(v string) constraints.Error {
-	if c != nil && c.IsValid(v) {
-		return nil
-	}
-	return constraints.ViolationError(c)
-}
-
-var (
-	_ Constraint         = &lengthConstraint{}
-	_ constraints.Length = &lengthConstraint{}
-)
-
-type lengthConstraint struct {
-	desc       string
-	constraint ints.Constraint
-}
-
-func (w *lengthConstraint) ConstraintDescription() string {
-	if w != nil {
-		if w.desc != "" {
-			return w.desc
-		}
-		if w.constraint != nil {
-			return "length " + w.constraint.ConstraintDescription()
-		}
-	}
-	return "string length constraint"
-}
-
-func (w *lengthConstraint) IsValid(v string) bool {
-	return w != nil && w.constraint != nil && w.constraint.IsValid(int64(len(v)))
-}
-
-func (w *lengthConstraint) ValidOrError(v string) constraints.Error {
-	if w == nil || !w.IsValid(v) {
-		return constraints.ViolationError(w)
-	}
-	return nil
 }

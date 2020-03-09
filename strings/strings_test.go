@@ -17,10 +17,10 @@ func TestEmpty(t *testing.T) {
 	if Empty.IsValid("empty") {
 		t.Errorf(`Empty.IsValid("empty")`)
 	}
-	if err := Empty.ValidOrError(""); err != nil {
-		t.Errorf(`err := Empty.ValidOrError(""); err != nil`)
+	if err := ValidOrError("", Empty); err != nil {
+		t.Errorf(`err := ValidOrError("", Empty); err != nil`)
 	}
-	err := Empty.ValidOrError("empty")
+	err := ValidOrError("empty", Empty)
 	if err == nil {
 		t.Errorf(`err must not be nil`)
 	}
@@ -74,7 +74,7 @@ func TestNotWhitespace(t *testing.T) {
 }
 
 func TestLength10(t *testing.T) {
-	len10 := Length(10)
+	len10 := NewLength(10)
 	if !len10.IsValid("1234567890") {
 		t.Errorf(`!len10.IsValid("1234567890")`)
 	}
@@ -90,7 +90,7 @@ func TestLength10(t *testing.T) {
 }
 
 func TestLength0(t *testing.T) {
-	len0 := Length(0)
+	len0 := NewLength(0)
 	if len0.ConstraintDescription() != "length 0" {
 		t.Errorf(`expecting "length 0", got %q`,
 			len0.ConstraintDescription())
@@ -107,7 +107,7 @@ func TestLength0(t *testing.T) {
 }
 
 func TestMinLength0(t *testing.T) {
-	min0 := MinLength(0)
+	min0 := NewMinLength(0)
 	if !min0.IsValid("1234567890") {
 		t.Errorf(`!min0.IsValid("1234567890")`)
 	}
@@ -120,7 +120,7 @@ func TestMinLength0(t *testing.T) {
 }
 
 func TestMinLength10(t *testing.T) {
-	min10 := MinLength(10)
+	min10 := NewMinLength(10)
 	if min10.IsValid("") {
 		t.Errorf(`min10.IsValid("")`)
 	}
@@ -136,7 +136,7 @@ func TestMinLength10(t *testing.T) {
 }
 
 func TestMaxLength0(t *testing.T) {
-	max0 := MaxLength(0)
+	max0 := NewMaxLength(0)
 	if !max0.IsValid("") {
 		t.Errorf(`!max0.IsValid("")`)
 	}
@@ -149,7 +149,7 @@ func TestMaxLength0(t *testing.T) {
 }
 
 func TestMaxLength10(t *testing.T) {
-	max10 := MaxLength(10)
+	max10 := NewMaxLength(10)
 	if !max10.IsValid("") {
 		t.Errorf(`!max10.IsValid("")`)
 	}
@@ -202,14 +202,14 @@ func TestSetBasic(t *testing.T) {
 	if violatedConstraints := cs.ValidateAll(""); len(violatedConstraints) != 1 || violatedConstraints[0] != NotEmpty {
 		t.Errorf("ValidateAll")
 	}
-	err := cs.ValidOrError("")
+	err := ValidOrError("", cs)
 	if err.Error() != "required to be not empty" {
 		t.Errorf(`expecting "required to be not empty", got %q`, err.Error())
 	}
 }
 
 func TestSetMinhNotWhitespace(t *testing.T) {
-	cs := Set{MinLength(5), NotWhitespace}
+	cs := Set{NewMinLength(5), NotWhitespace}
 	if cs.ConstraintDescription() != "min length 5, not whitespace" {
 		t.Errorf(`expecting "min length 5, not whitespace", got %q`,
 			cs.ConstraintDescription())
@@ -223,14 +223,14 @@ func TestSetMinhNotWhitespace(t *testing.T) {
 	if !cs.IsValid("hello") {
 		t.Errorf(`!cs.IsValid("hello")`)
 	}
-	err := cs.ValidOrError("   ")
+	err := ValidOrError("  ", cs)
 	if err.Error() != "required to be min length 5, not whitespace" {
 		t.Errorf(`expecting "required to be min length 5, not whitespace", got %q`, err.Error())
 	}
 }
 
 func TestConst(t *testing.T) {
-	emptyConst := Const("")
+	emptyConst := NewConst("")
 	if emptyConst.ConstraintDescription() != "const \"\"" {
 		t.Errorf(`expecting "const \"\"", got %q`, emptyConst.ConstraintDescription())
 	}
@@ -240,7 +240,7 @@ func TestConst(t *testing.T) {
 	if emptyConst.IsValid("empty") {
 		t.Errorf(`emptyConst.IsValid("empty")`)
 	}
-	helloConst := Const("hello")
+	helloConst := NewConst("hello")
 	if helloConst.IsValid("") {
 		t.Errorf(`helloConst.IsValid("")`)
 	}
