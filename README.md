@@ -11,8 +11,8 @@ When attempting to restructure errors in my project, I realized that errors
 could be classified into two classes: API errors, and data errors.
 
 When we are talking about data-related errors, most are instances are coming
-from data validation. An error which coming from a validation process should
-provide enough information about why the data is considered as invalid,
+out from data validation. An error which coming from a validation process
+should provide enough information about why the data is considered as invalid,
 i.e., the rules or constraints it violated.
 
 For example, we define `TooShortError`. We expect it to contains details
@@ -23,10 +23,9 @@ the errors, we could just make a generic error, something like
 constraint(s) a data is violating. Let the presentation layer translate it
 based on the consumer.
 
-We want the constraints to
-be structured so that it could be nicely passed as understandable data to
-other systems, including to the end-user presentation layer, which could be
-translated to any human language.
+We want the constraints to be structured so that it could be nicely passed
+as understandable data to other systems, including to the end-user
+presentation layer, which could be translated to any human language.
 
 ## Design
 
@@ -39,18 +38,16 @@ validation.
 
 ```go
 var (
-    // All of these constraints in this example could be declared as a
-    // regular expression pattern like this, but we are trying to design
+    usernameMinLength = MinLength(6)
+    usernameMaxLength = MaxLength(32)
+    // All these constraints in this example could be declared as a
+    // single regular expression pattern, but we are trying to design
     // a mechanism which is more readable, constructed of smaller, clear
-    // rules rather than a complex pattern which relatively hard to
-    // understand.
+    // rules rather than putting all the rules into a complex pattern.
     //
-    // In practice, it will be difficult to keep it simple without resorting
-    // to regular expression.
-    //
-    // We let this slide for now until we can find a better way to declare
-    // this kind of constraint. And also, because this pattern is pretty
-    // simple.
+    // We might want to find a way to declare for this kind of constraint,
+    // but we will limit how far we will go before we reinvent regular
+    // expression.
     usernameAllowedCharacters = Func(
         `allowed characters are A to Z, 0 to 9 and underscore`,
         regexp.MustCompile(`^[A-Za-z0-9_]+$`).MatchString))
@@ -81,8 +78,6 @@ var (
             return false
         })
     usernameNoConsecutiveUnderscore = NoConsecutiveRune('_')
-    usernameMinLength = MinLength(6)
-    usernameMaxLength = MaxLength(32)
 )
 ```
 
@@ -90,11 +85,12 @@ Next we define the constraint set:
 
 ```go
 var usernameConstraints = Set(
-    usernameStartsWith,
-    usernameEndsWith,
-    usernameAllowedCharacters,
     usernameMinLength,
     usernameMaxLength,
+    usernameAllowedCharacters,
+    usernameStartsWith,
+    usernameEndsWith,
+    usernameNoConsecutiveUnderscore,
 )
 ```
 
@@ -104,10 +100,9 @@ We could generate a decent instruction from the constraint:
 fmt.Printf("username: %s\n", usernameConstraints.ConstraintDescription())
 ```
 
-Which would print something like "username: starts with any letter from A to Z,
-ends with any letter from A to Z, allowed characters are...". Ideally,
-a constraint is mapped to some well thought messages if it's going to be
-displayed to human.
+Which would print something like `username: min length 6, max length 32,
+allowed characters are ...`. Ideally, a constraint is mapped to some well
+thought messages if it's going to be displayed to human.
 
 Then we can use the set:
 
