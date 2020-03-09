@@ -39,34 +39,6 @@ validation.
 
 ```go
 var (
-    // Name the variables based on the semantic rather than the
-    // description of the constraint (what a constraint is for, rather than
-    // what the constraint does). For the description of the constraint,
-    // we put it into the constraint instance itself.
-    //
-    // The variable name and the description are good if they sound good if
-    // we merge them:
-    // "username [starts with] any letter from A to Z".
-    usernameStartsWith = Func(
-        `starts with any letter from A to Z`,
-        func(v string) bool {
-            for _, r := range v {
-                if !(r >= 'a' && r <= 'z') && !(r >= 'A' && r <= 'Z') {
-                    return false
-                }
-            }
-            return true
-        })
-    usernameEndsWith = Func(
-        `ends with any letter from A to Z`,
-        func(v string) bool {
-            for _, r := range v {
-                if !(r >= 'a' && r <= 'z') && !(r >= 'A' && r <= 'Z') {
-                    return false
-                }
-            }
-            return true
-        })
     // All of these constraints in this example could be declared as a
     // regular expression pattern like this, but we are trying to design
     // a mechanism which is more readable, constructed of smaller, clear
@@ -82,6 +54,32 @@ var (
     usernameAllowedCharacters = Func(
         `allowed characters are A to Z, 0 to 9 and underscore`,
         regexp.MustCompile(`^[A-Za-z0-9_]+$`).MatchString))
+    // Name the variables based on the semantic rather than the
+    // description of the constraint (what a constraint is for, rather than
+    // what the constraint does). For the description of the constraint,
+    // we put it into the constraint instance itself.
+    //
+    // The variable name and the description are good if they sound good if
+    // we merge them:
+    // "username [starts with] a letter".
+    usernameStartsWith = Func(
+        `starts with a letter`,
+        func(v string) bool {
+            if v != "" {
+                r, _ := utf8.DecodeRuneInString(v)
+                return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z')
+            }
+            return false
+        })
+    usernameEndsWith = Func(
+        `ends with anything but underscore`,
+        func(v string) bool {
+            if v != "" {
+                r, _ := utf8.DecodeLastRuneInString(v)
+                return r != '_'
+            }
+            return false
+        })
     usernameNoConsecutiveUnderscore = NoConsecutiveRune('_')
     usernameMinLength = MinLength(6)
     usernameMaxLength = MaxLength(32)
