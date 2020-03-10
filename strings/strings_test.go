@@ -137,6 +137,10 @@ func TestMinLength10(t *testing.T) {
 
 func TestMaxLength0(t *testing.T) {
 	max0 := NewMaxLength(0)
+	if max0.ConstraintDescription() != "max length 0" {
+		t.Errorf(`expecting "max length 0", got %q`,
+			max0.ConstraintDescription())
+	}
 	if !max0.IsValid("") {
 		t.Errorf(`!max0.IsValid("")`)
 	}
@@ -176,6 +180,10 @@ func TestSetEmpty(t *testing.T) {
 	if !cs.IsValid("hello") {
 		t.Errorf(`!cs.IsValid("hello")`)
 	}
+	cl := cs.ConstraintList()
+	if len(cl) != 0 {
+		t.Errorf(`expecting empty constraint list`)
+	}
 }
 
 func TestSetBasic(t *testing.T) {
@@ -206,6 +214,12 @@ func TestSetBasic(t *testing.T) {
 	if err.Error() != "required to be not empty" {
 		t.Errorf(`expecting "required to be not empty", got %q`, err.Error())
 	}
+	cl := cs.ConstraintList()
+	for i, cA := range cl {
+		if cA != cs[i] {
+			t.Errorf(`cs.ConstraintList()`)
+		}
+	}
 }
 
 func TestSetMinhNotWhitespace(t *testing.T) {
@@ -223,7 +237,11 @@ func TestSetMinhNotWhitespace(t *testing.T) {
 	if !cs.IsValid("hello") {
 		t.Errorf(`!cs.IsValid("hello")`)
 	}
-	err := ValidOrError("  ", cs)
+	err := ValidOrError("12345", cs)
+	if err != nil {
+		t.Errorf(`expecting <nil>, got %v`, err)
+	}
+	err = ValidOrError("  ", cs)
 	if err.Error() != "required to be min length 5, not whitespace" {
 		t.Errorf(`expecting "required to be min length 5, not whitespace", got %q`, err.Error())
 	}
