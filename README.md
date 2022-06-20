@@ -1,14 +1,15 @@
-# Constraints
+# [Data] Constraints
 
-An experimental package for defining data constraints in Go.
+An experimental package for defining data constraints in Go. Not the same
+as type constrains.
 
 Note that this project is in experimental stage. The interfaces are not
 guaranteed to stay as they are now. Everything is subject to change.
 
 ## Background
 
-When attempting to restructure errors in my project, I realized that errors
-could be classified into two classes: API errors, and data errors.
+When attempting to restructure errors in my project, I realized that some
+of the errors could be classified as data errors.
 
 When we are talking about data-related errors, most instances are coming
 out from data validation. An error which coming from a validation process
@@ -47,7 +48,7 @@ presentation layer, which could be translated to any human language.
 
 - Easy to generate rules for other systems
 
-
+  E.g., JSON schema.
 
 ## Design
 
@@ -165,6 +166,22 @@ other systems, e.g., JSON Schema.
 jsonSchemaField := JSONSchemaField("username", usernameConstraints)
 
 //...
+```
+
+### Another examples
+
+```go
+func doSomethingToSelf(ctx context.Context, userID iam.UserID) error {
+	if err := ContextConstraintSet(
+		ContextNotNil,
+		ContextUserOnly,
+		ContextUserMatches(userID),
+	).ValidateAll(ctx); err != nil {
+		return err
+	}
+
+	// ...
+}
 ```
 
 ## Hacking
