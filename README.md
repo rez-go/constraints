@@ -68,7 +68,7 @@ var (
     // a mechanism which is more readable, constructed of smaller, clear
     // rules rather than putting all the rules into a complex pattern.
     //
-    // We might want to find a way to declare for this kind of constraint,
+    // We might want to find a way to declare this kind of constraint,
     // but we will limit how far we will go before we reinvent regular
     // expression.
     usernameAllowedCharacters = Func(
@@ -176,7 +176,7 @@ func doSomethingToSelf(ctx context.Context, userID iam.UserID) error {
 		ContextNotNil,
 		ContextUserOnly,
 		ContextUserMatches(userID),
-	).ValidateAll(ctx); err != nil {
+	).ValidOrError(ctx); err != nil {
 		return err
 	}
 
