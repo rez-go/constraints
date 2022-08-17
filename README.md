@@ -61,8 +61,8 @@ validation.
 
 ```go
 var (
-    usernameMinLength = MinLength(6)
-    usernameMaxLength = MaxLength(32)
+    usernameMinLength = StringMinLength(6)
+    usernameMaxLength = StringMaxLength(32)
     // All these constraints in this example could be declared as a
     // single regular expression pattern, but we are trying to design
     // a mechanism which is more readable, constructed of smaller, clear
@@ -100,7 +100,7 @@ var (
             }
             return false
         })
-    usernameNoConsecutiveUnderscore = NoConsecutiveRune('_')
+    usernameNoConsecutiveUnderscore = StringNoConsecutiveRune('_')
 )
 ```
 
@@ -148,7 +148,7 @@ one go rather than back-and-forth.
 Or as error in a request handler:
 
 ```go
-err := usernameConstraints.ValidOrError(username)
+err := ValidOrError(username, usernameConstraints)
 if err != nil {
     return ArgumentError("username", err)
 }

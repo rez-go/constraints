@@ -3,37 +3,43 @@ package constraints
 import "errors"
 
 // An Error is a specialized error which describes constraint violation(s).
-type Error interface {
+type Error[
+	ValueT any,
+] interface {
 	error
-	ViolatedConstraint() Constraint
+	ViolatedConstraint() Constraint[ValueT]
 }
 
 // ViolationError creates a new constraint violation error.
-func ViolationError(c Constraint) Error {
-	return &requirementError{c}
+func ViolationError[
+	ValueT any,
+](c Constraint[ValueT]) Error[ValueT] {
+	return &requirementError[ValueT]{c}
 }
 
 // ViolatedConstraintFromError attempts to extract violated Constraint
 // from an error.
-func ViolatedConstraintFromError(err error) Constraint {
+func ViolatedConstraintFromError[
+	ValueT any,
+](err error) Constraint[ValueT] {
 	if err != nil {
-		if e, ok := err.(Error); ok {
+		if e, ok := err.(Error[ValueT]); ok {
 			return e.ViolatedConstraint()
 		}
-		return ViolatedConstraintFromError(errors.Unwrap(err))
+		return ViolatedConstraintFromError[ValueT](errors.Unwrap(err))
 	}
 	return nil
 }
 
 var (
-	_ Error = &requirementError{}
+	_ Error[any] = &requirementError[any]{}
 )
 
-type requirementError struct {
-	violated Constraint
+type requirementError[ValueT any] struct {
+	violated Constraint[ValueT]
 }
 
-func (e *requirementError) Error() string {
+func (e *requirementError[ValueT]) Error() string {
 	if e != nil {
 		if c := e.violated; c != nil {
 			return "required to be " +
@@ -44,7 +50,7 @@ func (e *requirementError) Error() string {
 	return "unknown constraint violation"
 }
 
-func (e *requirementError) ViolatedConstraint() Constraint {
+func (e *requirementError[ValueT]) ViolatedConstraint() Constraint[ValueT] {
 	if e != nil {
 		return e.violated
 	}
