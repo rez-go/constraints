@@ -62,8 +62,7 @@ func ExampleStringUsername() {
 func TestStringUsername(t *testing.T) {
 
 	var (
-		usernameMinLength = StringMinLength(6)
-		usernameMaxLength = StringMaxLength(32)
+		usernameLength = LengthRange[string](6, 32)
 		// All these constraints in this example could be declared as a
 		// single regular expression pattern, but we are trying to design
 		// a mechanism which is more readable, constructed of smaller, clear
@@ -98,8 +97,7 @@ func TestStringUsername(t *testing.T) {
 		usernameNoConsecutiveUnderscore = StringNoConsecutiveRune('_')
 	)
 	var usernameConstraints = Set(
-		usernameMinLength,
-		usernameMaxLength,
+		usernameLength,
 		usernameAllowedCharacters,
 		usernameStartsWith,
 		usernameEndsWith,
@@ -110,11 +108,12 @@ func TestStringUsername(t *testing.T) {
 		input               string
 		violatedConstraints []Constraint[string]
 	}{
-		{"", []Constraint[string]{usernameMinLength}},
-		{" ", []Constraint[string]{usernameMinLength, usernameAllowedCharacters}},
+		{"", []Constraint[string]{usernameLength}},
+		{" ", []Constraint[string]{usernameLength, usernameAllowedCharacters}},
 		{"______", []Constraint[string]{
 			usernameStartsWith, usernameEndsWith, usernameNoConsecutiveUnderscore,
 		}},
+		{"helloworld", nil},
 	}
 
 	for _, c := range cases {
@@ -130,6 +129,7 @@ func TestStringUsername(t *testing.T) {
 				checkV := c.violatedConstraints[i]
 				if resultV != checkV {
 					match = false
+					break
 				}
 			}
 			if !match {

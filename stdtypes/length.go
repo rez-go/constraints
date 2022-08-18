@@ -44,6 +44,10 @@ func MinLength[ValueT lenable](minLength int) constraints.Constraint[ValueT] {
 	return &lengthConstraint[ValueT]{min: minLength, max: -1}
 }
 
+func LengthRange[ValueT lenable](min int, max int) constraints.Constraint[ValueT] {
+	return &lengthConstraint[ValueT]{min: min, max: max}
+}
+
 // lengthConstraint defines exact length Constraint.
 type lengthConstraint[ValueT lenable] struct {
 	min int
