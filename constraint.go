@@ -294,7 +294,11 @@ type ValidatorFunc[ValueT any] func(i ValueT) bool
 func Func[
 	ValueT any,
 ](desc string, fn func(v ValueT) bool) Constraint[ValueT] {
-	return &constraintFunc[ValueT]{desc, fn}
+	return &constraintFunc[ValueT]{
+		negate: false,
+		desc:   desc,
+		fn:     fn,
+	}
 }
 
 var (
@@ -303,8 +307,9 @@ var (
 )
 
 type constraintFunc[ValueT any] struct {
-	desc string
-	fn   ValidatorFunc[ValueT]
+	negate bool
+	desc   string
+	fn     ValidatorFunc[ValueT]
 }
 
 func (c constraintFunc[ValueT]) ConstraintDescription() string {
@@ -312,7 +317,19 @@ func (c constraintFunc[ValueT]) ConstraintDescription() string {
 }
 
 func (c constraintFunc[ValueT]) IsValid(v ValueT) bool {
-	return c.fn(v)
+	result := c.fn(v)
+	if c.negate {
+		return !result
+	}
+	return result
+}
+
+func Negate[ValueT any](c Constraint[ValueT], descOverride string) Constraint[ValueT] {
+	desc := descOverride
+	if desc == "" {
+		desc = "not " + c.ConstraintDescription()
+	}
+	return &constraintFunc[ValueT]{negate: true, desc: desc, fn: c.IsValid}
 }
 
 func valueLiteralString(v any) string {
