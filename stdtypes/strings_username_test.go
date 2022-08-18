@@ -106,11 +106,11 @@ func TestStringUsername(t *testing.T) {
 
 	cases := []struct {
 		input               string
-		violatedConstraints []Constraint[string]
+		violatedConstraints []StringConstraint
 	}{
-		{"", []Constraint[string]{usernameLength}},
-		{" ", []Constraint[string]{usernameLength, usernameAllowedCharacters}},
-		{"______", []Constraint[string]{
+		{"", []StringConstraint{usernameLength}},
+		{" ", []StringConstraint{usernameLength, usernameAllowedCharacters}},
+		{"______", []StringConstraint{
 			usernameStartsWith, usernameEndsWith, usernameNoConsecutiveUnderscore,
 		}},
 		{"helloworld", nil},
