@@ -173,15 +173,9 @@ func TestSetEmpty(t *testing.T) {
 func TestSetBasic(t *testing.T) {
 	cs := StringSet(NonEmptyString, NonBlankString)
 	assertEq(t, "non-empty, non-blank", cs.ConstraintDescription())
-	if cs.IsValid("") {
-		t.Errorf(`cs.IsValid("")`)
-	}
-	if cs.IsValid("  ") {
-		t.Errorf(`cs.IsValid("  ")`)
-	}
-	if !cs.IsValid("hello") {
-		t.Errorf(`!cs.IsValid("hello")`)
-	}
+	assertEq(t, false, cs.IsValid(""))
+	assertEq(t, false, cs.IsValid(" "))
+	assertEq(t, true, cs.IsValid("hello"))
 	if violatedConstraint := cs.Validate(""); violatedConstraint != NonEmptyString {
 		t.Errorf(`expecting %#v, got %#v`, NonEmptyString, violatedConstraint)
 	}
@@ -308,4 +302,21 @@ func TestNoConsecutiveRune(t *testing.T) {
 	if !noConsecutiveUnderscore.IsValid("_._") {
 		t.Errorf(`!noConsecutiveUnderscore.IsValid("_._")`)
 	}
+}
+
+func TestStringAny(t *testing.T) {
+	constraint := StringRunesAny(
+		RuneRange('A', 'Z'),
+		RuneRange('a', 'z'),
+		RuneRange('0', '9'),
+		RuneMatch('_'),
+	)
+	assertEq(t, "from 'A' to 'Z' or from 'a' to 'z' or from '0' to '9' or match '_'",
+		constraint.ConstraintDescription())
+	assertEq(t, true, constraint.IsValid(""))
+	assertEq(t, true, constraint.IsValid("hello"))
+	assertEq(t, true, constraint.IsValid("HELLO"))
+	assertEq(t, true, constraint.IsValid("heLLO"))
+	assertEq(t, true, constraint.IsValid("HeLLo"))
+	assertEq(t, true, constraint.IsValid("HELLo"))
 }

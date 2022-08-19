@@ -62,79 +62,64 @@ func ExampleStringUsername() {
 func TestStringUsername(t *testing.T) {
 
 	var (
-		usernameLength = LengthRange[string](6, 32)
-		// All these constraints in this example could be declared as a
-		// single regular expression pattern, but we are trying to design
-		// a mechanism which is more readable, constructed of smaller, clear
-		// rules rather than putting all the rules into a complex pattern.
-		//
-		// We might want to find a way to declare this kind of constraint,
-		// but we will limit how far we will go before we reinvent regular
-		// expression.
+		usernameLength = StringLengthRange(6, 32)
+		usernameRunes  = StringRunesAny(
+			RuneRange('A', 'Z'),
+			RuneRange('a', 'z'),
+			RuneRange('0', '9'),
+			RuneMatch('_'),
+		)
 		usernameAllowedCharacters = Func(
-			`allowed characters are A to Z, 0 to 9 and underscore`,
-			regexp.MustCompile(`^[A-Za-z0-9_]+$`).MatchString)
-		// Name the variables based on the semantic rather than the
-		// description of the constraint (what a constraint is for, rather than
-		// what the constraint does). For the description of the constraint,
-		// we put it into the constraint instance itself.
-		//
-		// The variable name and the description are good if they sound good if
-		// we merge them:
-		// "username [starts with] a letter".
-		usernameStartsWith = Func(
-			`starts with a letter`,
-			func(v string) bool {
-				if v != "" {
-					r, _ := utf8.DecodeRuneInString(v)
-					return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z')
-				}
-				return false
-			})
-		usernameEndsWith = Negate(
+			"allowed characters are A to Z (case-insensitive), 0 to 9 and underscore",
+			usernameRunes.IsValid)
+		usernameFirstCharacter = Func(
+			"starts with a letter",
+			StringRuneAtIndexAny(
+				0,
+				RuneRange('A', 'Z'),
+				RuneRange('a', 'z')).IsValid)
+		usernameLastCharacter = Negate(
 			StringSuffix("_"),
 			`ends with anything but underscore`)
-		usernameNoConsecutiveUnderscore = StringNoConsecutiveRune('_')
+		usernameNoConsecutiveCharacters = StringNoConsecutiveRune('_')
 	)
 	var usernameConstraints = Set(
 		usernameLength,
 		usernameAllowedCharacters,
-		usernameStartsWith,
-		usernameEndsWith,
-		usernameNoConsecutiveUnderscore,
+		usernameFirstCharacter,
+		usernameLastCharacter,
+		usernameNoConsecutiveCharacters,
 	)
+
+	assertEq(t,
+		"length betwen 6 and 32, "+
+			"allowed characters are A to Z (case-insensitive), 0 to 9 and underscore, "+
+			"starts with a letter, ends with anything but underscore, no consecutive '_'",
+		usernameConstraints.ConstraintDescription())
 
 	cases := []struct {
 		input               string
+		valid               bool
 		violatedConstraints []StringConstraint
 	}{
-		{"", []StringConstraint{usernameLength}},
-		{" ", []StringConstraint{usernameLength, usernameAllowedCharacters}},
-		{"______", []StringConstraint{
-			usernameStartsWith, usernameEndsWith, usernameNoConsecutiveUnderscore,
-		}},
-		{"helloworld", nil},
+		{"", false, []StringConstraint{usernameLength, usernameFirstCharacter}},
+		{" ", false, []StringConstraint{usernameLength, usernameAllowedCharacters, usernameFirstCharacter}},
+		{"______", false, []StringConstraint{
+			usernameFirstCharacter, usernameLastCharacter,
+			usernameNoConsecutiveCharacters}},
+		{"helloworld", true, nil},
+		{"hello1", true, nil},
+		{"hello123456", true, nil},
+		{"hello_1234", true, nil},
+		{"hello_", false, []StringConstraint{usernameLastCharacter}},
+		{" hello", false, []StringConstraint{usernameAllowedCharacters, usernameFirstCharacter}},
+		// Must start with a letter
+		{"0xdeadbeef", false, []StringConstraint{usernameFirstCharacter}},
+		{"_underscore_first", false, []StringConstraint{usernameFirstCharacter}},
 	}
 
 	for _, c := range cases {
-		violated := usernameConstraints.ValidateAll(c.input)
-		if c.violatedConstraints == nil {
-			if violated != nil {
-				t.Errorf("Case %q got %v", c.input, violated)
-			}
-		} else {
-			match := true
-			for i := range c.violatedConstraints {
-				resultV := violated[i]
-				checkV := c.violatedConstraints[i]
-				if resultV != checkV {
-					match = false
-					break
-				}
-			}
-			if !match {
-				t.Errorf("Case %q expecting %v got %v", c.input, c.violatedConstraints, violated)
-			}
-		}
+		assertEq(t, c.valid, usernameConstraints.IsValid(c.input))
+		assertEq(t, c.violatedConstraints, usernameConstraints.ValidateAll(c.input), "Case %q", c.input)
 	}
 }
